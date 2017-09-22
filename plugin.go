@@ -67,7 +67,7 @@ func (p Plugin) Exec() error {
 		return errors.New("no job file specified")
 	}
 	if p.Config.NomadAddr == "" {
-		p.Config.NomadAddr = "http://localhost:4647"
+		p.Config.NomadAddr = "http://nomad.service.consul:4646"
 	}
 
 	jobFile, err := os.Open(p.Config.Job)
