@@ -1,5 +1,15 @@
 package main
 
+import (
+	"fmt"
+	"os"
+	"errors"
+	"io/ioutil"
+	"text/template"
+	"bytes"
+	"os/exec"
+)
+
 type (
 	Repo struct {
 		Owner   string
@@ -39,7 +49,9 @@ type (
 	}
 
 	Config struct {
-		// plugin-specific parameters and secrets
+		NomadAddr   string
+		Job         string
+		UseTemplate bool
 	}
 
 	Plugin struct {
@@ -51,6 +63,41 @@ type (
 )
 
 func (p Plugin) Exec() error {
-	// plugin logic goes here
-	return nil
+	if p.Config.Job == "" {
+		return errors.New("no job file specified")
+	}
+	if p.Config.NomadAddr == "" {
+		p.Config.NomadAddr = "http://localhost:4647"
+	}
+
+	jobFile, err := os.Open(p.Config.Job)
+	if err != nil {
+		return err
+	}
+	defer jobFile.Close()
+
+	jobSpecBytes, err := ioutil.ReadAll(jobFile)
+	if err != nil {
+		return fmt.Errorf("could not read job file %s: %v", p.Config.Job, err)
+	}
+
+	var jobSpec *bytes.Buffer
+	if p.Config.UseTemplate {
+		tmpl, err := template.New("job").Parse(string(jobSpecBytes))
+		if err != nil {
+			return err
+		}
+		jobSpec = new(bytes.Buffer)
+		if err := tmpl.Execute(jobSpec, p); err != nil {
+			return err
+		}
+	} else {
+		jobSpec = bytes.NewBuffer(jobSpecBytes)
+	}
+
+	cmd := exec.Command("/bin/nomad", "run", "-address", p.Config.NomadAddr, "-verbose", "-")
+	cmd.Stdin = jobSpec
+	out, err := cmd.CombinedOutput()
+	fmt.Println(string(out))
+	return err
 }

@@ -12,8 +12,7 @@ var version string // build number set at compile-time
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "my plugin"
-	app.Usage = "my plugin usage"
+	app.Name = "nomad"
 	app.Action = run
 	app.Version = version
 	app.Flags = []cli.Flag{
@@ -191,6 +190,26 @@ func main() {
 			Usage:  "previous build sha",
 			EnvVar: "DRONE_PREV_COMMIT_SHA",
 		},
+
+		//
+		// plugin args
+		//
+
+		cli.StringFlag{
+			Name:   "nomad_addr",
+			Usage:  "Nomad server address",
+			EnvVar: "PLUGIN_NOMAD_ADDR",
+		},
+		cli.StringFlag{
+			Name:   "job",
+			Usage:  "Job file",
+			EnvVar: "PLUGIN_JOB",
+		},
+		cli.BoolFlag{
+			Name:   "use_template",
+			Usage:  "Interpret the job file as a Go template",
+			EnvVar: "PLUGIN_USE_TEMPLATE",
+		},
 	}
 
 	app.Run(os.Args)
@@ -231,7 +250,9 @@ func run(c *cli.Context) {
 			},
 		},
 		Config: Config{
-		// plugin-specific parameters
+			NomadAddr:   c.String("nomad_addr"),
+			Job:         c.String("job"),
+			UseTemplate: c.Bool("use_template"),
 		},
 	}
 

@@ -82,3 +82,16 @@ Please create plugins that are easily runnable from the command line. This makes
 ### Vendoring
 
 Please vendor dependencies in a manner compatible with `GOVENDOREXPERIMENT`. All official drone plugins should use [govend](https://github.com/govend/govend) with the `--prune` flag.
+
+
+    docker run --rm \
+      -e PLUGIN_TAG=latest \
+      -e PLUGIN_REPO=octocat/hello-world \
+      -e DRONE_COMMIT_SHA=d8dbe4d94f15fe89232e0402c6e8a0ddf21af3ab \
+      -e PLUGIN_JOB=jobfile.nomad \
+      -e PLUGIN_USE_TEMPLATE=true \
+      -e PLUGIN_NOMAD_ADDR=http://localhost:4647 \
+      -v $(pwd):$(pwd) \
+      -w $(pwd) \
+      --privileged \
+      publysher/drone-nomad
